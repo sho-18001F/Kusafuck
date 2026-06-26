@@ -1,5 +1,7 @@
 
 ## Kusafuck Programming Language
+what
+### Instruction Set
 | Command (記号) | Description (日本語) |
 | :---: | :--- |
 | `+` | Increment current memory cell value (現在の値を+1) |
@@ -16,3 +18,7 @@
 | `( )` | Comments (コメント) |
 | `?` | Show internal instruction help menu (ヘルプメニューの表示) |
 | `d` | Yellow colored beautiful memory hex dump (現在のメモリ状態をダンプ表示) |
+
+```
+./kusa main.kf
+```
