@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// 💡 分離した標準ライブラリヘッダーを読み込む
 #include "kusa_stdlib.h"
 
 #ifdef _WIN32
     #include <windows.h>
 #endif
 
-#define MEMORY_SIZE 30000
 #define MAX_LIBS 10         
 #define MAX_FUNCTIONS 100   
 #define CALL_STACK_SIZE 100 
@@ -21,16 +22,17 @@ int function_count = 0;
 int call_stack[CALL_STACK_SIZE];
 int call_stack_top = 0;
 
-// 解放処理を共通化
+// メモリ解放処理
 void cleanup(char *code) {
     if (code) free(code);
-    for (int i = 1; i <= lib_count; i++) {
+    for (int i = 0; i < lib_count; i++) {
         if (libs[i]) free(libs[i]);
     }
 }
 
+// ファイル読み込み
 char *read_file(const char *filename) {
-    FILE *file = fopen(filename, "rb"); // Windows環境を考慮し、バイナリモードを推奨
+    FILE *file = fopen(filename, "rb");
     if (!file) return NULL;
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
@@ -46,20 +48,20 @@ char *read_file(const char *filename) {
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
-    SetConsoleOutputCP(65001); 
+    SetConsoleOutputCP(65001); // 出力をUTF-8に固定
 #endif
 
     char *main_file = NULL;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-l") == 0) {
-            if (i + 1 < argc && (lib_count + 1) < MAX_LIBS) {
-                lib_count++;
+            if (i + 1 < argc && lib_count < MAX_LIBS) {
                 libs[lib_count] = read_file(argv[i + 1]);
                 if (!libs[lib_count]) {
                     printf("\033[1;31mエラー: ライブラリ '%s' が開けません。\033[0m\n", argv[i + 1]);
                     return 1;
                 }
+                lib_count++;
                 i++;
             }
         } else {
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!main_file) {
-        printf("使用方法: %s <メインファイル.kf> [-l <ライブラリ.kf> ...]\n", argv[0]); // argv から argv[0] に修正
+        printf("使用方法: %s <メインファイル.kf> [-l <ライブラリ.kf> ...]\n", argv[0]);
         return 1;
     }
 
@@ -82,6 +84,26 @@ int main(int argc, char *argv[]) {
     int dp = 0;
     int pc = 0;
 
+    // 事前パース（実行前に関数 `{ }` の位置を登録）
+    int scan_pc = 0;
+    while (code[scan_pc] != '\0') {
+        if (code[scan_pc] == '(') {
+            while (code[scan_pc] != ')' && code[scan_pc] != '\0') scan_pc++;
+        } else if (code[scan_pc] == '{') {
+            if (function_count < MAX_FUNCTIONS) {
+                function_pcs[function_count++] = scan_pc + 1;
+            }
+            int brace_count = 1;
+            while (brace_count > 0 && code[scan_pc] != '\0') {
+                scan_pc++;
+                if (code[scan_pc] == '{') brace_count++;
+                if (code[scan_pc] == '}') brace_count--;
+            }
+        }
+        if (code[scan_pc] != '\0') scan_pc++;
+    }
+
+    // メインの実行ループ
     while (code[pc] != '\0') {
         char command = code[pc];
 
@@ -124,7 +146,6 @@ int main(int argc, char *argv[]) {
                     cleanup(code);
                     return 1;
                 }
-                // pcは今 ')' を指しているので、switch文を出た後の pc++ で次の文字に進む
                 break;
 
             case '?': 
@@ -161,19 +182,12 @@ int main(int argc, char *argv[]) {
                     
                     free(code);
                     code = new_code;
-                    pc = -1; // 💡本来はインクルード用の別スタック管理が望ましいですが、一旦そのままにします
+                    pc = -1; 
                 }
                 break;
             }
 
-            case '{': 
-                if (function_count < MAX_FUNCTIONS) {
-                    function_pcs[function_count++] = pc + 1;
-                } else {
-                    printf("\033[1;31mエラー: 関数定義の最大数を超えました。\033[0m\n");
-                    cleanup(code);
-                    return 1;
-                }
+            case '{': {
                 int brace_count = 1;
                 while (brace_count > 0) {
                     pc++;
@@ -186,6 +200,7 @@ int main(int argc, char *argv[]) {
                     if (code[pc] == '}') brace_count--;
                 }
                 break;
+            }
 
             case '}': 
                 if (call_stack_top > 0) {
@@ -194,7 +209,8 @@ int main(int argc, char *argv[]) {
                 break;
 
             case '/': 
-                if (memory[dp] < function_count) {
+                // 有効なユーザー定義関数があれば呼び出し、なければシステムコールを実行
+                if (function_count > 0 && memory[dp] < function_count) {
                     if (call_stack_top < CALL_STACK_SIZE) {
                         call_stack[call_stack_top++] = pc; 
                         pc = function_pcs[memory[dp]] - 1; 
@@ -204,7 +220,6 @@ int main(int argc, char *argv[]) {
                         return 1;
                     }
                 } else {
-                    // 標準外部ライブラリのシステムコール呼び出し
                     execute_syscall(memory, &dp);
                 }
                 break;
