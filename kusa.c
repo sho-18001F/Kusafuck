@@ -21,16 +21,24 @@ int function_count = 0;
 int call_stack[CALL_STACK_SIZE];
 int call_stack_top = 0;
 
+// 解放処理を共通化
+void cleanup(char *code) {
+    if (code) free(code);
+    for (int i = 1; i <= lib_count; i++) {
+        if (libs[i]) free(libs[i]);
+    }
+}
+
 char *read_file(const char *filename) {
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(filename, "rb"); // Windows環境を考慮し、バイナリモードを推奨
     if (!file) return NULL;
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
     char *buf = malloc(size + 1);
     if (buf) {
-        fread(buf, 1, size, file);
-        buf[size] = '\0';
+        size_t read_bytes = fread(buf, 1, size, file);
+        buf[read_bytes] = '\0';
     }
     fclose(file);
     return buf;
@@ -38,7 +46,7 @@ char *read_file(const char *filename) {
 
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
-    SetConsoleOutputCP(65001); // Windowsのみ実行時にUTF-8固定
+    SetConsoleOutputCP(65001); 
 #endif
 
     char *main_file = NULL;
@@ -60,7 +68,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!main_file) {
-        printf("使用方法: %s <メインファイル.kf> [-l <ライブラリ.kf> ...]\n", argv);
+        printf("使用方法: %s <メインファイル.kf> [-l <ライブラリ.kf> ...]\n", argv[0]); // argv から argv[0] に修正
         return 1;
     }
 
@@ -106,18 +114,17 @@ int main(int argc, char *argv[]) {
             }
 
             case ';': 
-                free(code);
-                for(int i = 1; i <= lib_count; i++) free(libs[i]);
+                cleanup(code);
                 return 0;
 
             case '(': 
                 while (code[pc] != ')' && code[pc] != '\0') pc++;
                 if (code[pc] == '\0') {
                     printf("\033[1;31mエラー: '(' に対応する ')' が閉じられていません。\033[0m\n");
-                    free(code);
-                    for(int i = 1; i <= lib_count; i++) free(libs[i]);
+                    cleanup(code);
                     return 1;
                 }
+                // pcは今 ')' を指しているので、switch文を出た後の pc++ で次の文字に進む
                 break;
 
             case '?': 
@@ -154,7 +161,7 @@ int main(int argc, char *argv[]) {
                     
                     free(code);
                     code = new_code;
-                    pc = -1; 
+                    pc = -1; // 💡本来はインクルード用の別スタック管理が望ましいですが、一旦そのままにします
                 }
                 break;
             }
@@ -162,14 +169,17 @@ int main(int argc, char *argv[]) {
             case '{': 
                 if (function_count < MAX_FUNCTIONS) {
                     function_pcs[function_count++] = pc + 1;
+                } else {
+                    printf("\033[1;31mエラー: 関数定義の最大数を超えました。\033[0m\n");
+                    cleanup(code);
+                    return 1;
                 }
                 int brace_count = 1;
                 while (brace_count > 0) {
                     pc++;
                     if (code[pc] == '\0') {
                         printf("\033[1;31mエラー: '{' に対応する '}' が見つかりません。\033[0m\n");
-                        free(code);
-                        for(int i = 1; i <= lib_count; i++) free(libs[i]);
+                        cleanup(code);
                         return 1;
                     }
                     if (code[pc] == '{') brace_count++;
@@ -184,10 +194,17 @@ int main(int argc, char *argv[]) {
                 break;
 
             case '/': 
-                if (memory[dp] < function_count && call_stack_top < CALL_STACK_SIZE) {
-                    call_stack[call_stack_top++] = pc; 
-                    pc = function_pcs[memory[dp]] - 1; 
+                if (memory[dp] < function_count) {
+                    if (call_stack_top < CALL_STACK_SIZE) {
+                        call_stack[call_stack_top++] = pc; 
+                        pc = function_pcs[memory[dp]] - 1; 
+                    } else {
+                        printf("\033[1;31mエラー: コールスタックがオーバーフローしました。\033[0m\n");
+                        cleanup(code);
+                        return 1;
+                    }
                 } else {
+                    // 標準外部ライブラリのシステムコール呼び出し
                     execute_syscall(memory, &dp);
                 }
                 break;
@@ -199,8 +216,7 @@ int main(int argc, char *argv[]) {
                         pc++;
                         if (code[pc] == '\0') {
                             printf("\033[1;31mエラー: '[' に対応する ']' が見つかりません。\033[0m\n");
-                            free(code);
-                            for(int i = 1; i <= lib_count; i++) free(libs[i]);
+                            cleanup(code);
                             return 1;
                         }
                         if (code[pc] == '[') loop_count++;
@@ -216,8 +232,7 @@ int main(int argc, char *argv[]) {
                         pc--;
                         if (pc < 0) {
                             printf("\033[1;31mエラー: ']' に対応する '[' が見つかりません。\033[0m\n");
-                            free(code);
-                            for(int i = 1; i <= lib_count; i++) free(libs[i]);
+                            cleanup(code);
                             return 1;
                         }
                         if (code[pc] == ']') loop_count++;
@@ -229,7 +244,6 @@ int main(int argc, char *argv[]) {
         pc++;
     }
 
-    free(code);
-    for(int i = 1; i <= lib_count; i++) free(libs[i]);
+    cleanup(code);
     return 0;
 }
