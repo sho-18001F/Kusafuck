@@ -7,7 +7,7 @@
 | `>` | Move data pointer to the right (ポインタを右に移動) |
 | `,` | Move data pointer to the left (ポインタを左に移動) |
 | `.` | Output current value as UTF-8 encoded text (ASCII文字をUTF-8として出力) |
-| `;` | HALT / Immediate termination (プログラムの即時終了) |
+| `;` | HALT (プログラム終了) |
 | `[` | Jump forward to `]` if current cell is 0 (値が0ならループを抜ける) |
 | `]` | Jump backward to `[` if current cell is NOT 0 (値が0以外ならループの先頭に戻る) |
 | `%` | Include external library file (外部ファイルの動的インクルード) |
