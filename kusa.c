@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
                 break;
 
             case 'd': 
-                printf("\n\033[1;33m--- MEMORY DUMP (現在位置: %d) ---\033[0m\n", dp);
+                printf("\n\033[1;33m--- memory dump (現在位置: %d) ---\033[0m\n", dp);
                 for (int i = 0; i < 10; i++) {
                     if (i == dp) printf("\033[1;32m[%d]: %d *\033[0m | ", i, memory[i]);
                     else printf("[%d]: %d | ", i, memory[i]);
