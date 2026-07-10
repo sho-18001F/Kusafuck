@@ -89,25 +89,22 @@ static inline void execute_syscall(unsigned short *memory, int *dp) {
             break;
         }
         
-        case 30: { // OSコマンド実行（Windows環境の31ズレ自動補正機能付き）
+case 30: { // OSコマンド実行（安全なストレート版）
             char cmd_buf[512] = {0};
             int i = 0;
             int current_idx = next;
             
             // 0（NULL）に出会うまで、最大511文字を安全にコピー
             while (memory[current_idx] != 0 && i < 511) {
-                unsigned short val = memory[current_idx];
-                
-                // Windows環境で文字コードが31ズレる現象を自動で検知してねじ伏せる
-                if (val > 0 && val < 128 && (val + 31 == 'n' || val + 31 == 'o' || val + 31 == 't')) {
-                    val += 31;
-                }
-                
-                cmd_buf[i] = (char)val;
+                cmd_buf[i] = (char)memory[current_idx];
                 i++;
                 current_idx = NEXT_DP(current_idx);
             }
-            if (i > 0) system(cmd_buf);
+
+            if (i > 0) {
+                printf("[Kusafuck System Call]: %s\n", cmd_buf); // デバッグ用にコマンドを表示
+                system(cmd_buf);
+            }
             break;
         }
         
