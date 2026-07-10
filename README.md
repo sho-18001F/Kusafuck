@@ -1,6 +1,9 @@
 
 ## Kusafuck Programming Language
 what
+#### Cautions
+KusaFuckUpdater requires Administrator authority
+
 ### Instruction Set
 | Command (記号) | Description (日本語) |
 | :---: | :--- |
