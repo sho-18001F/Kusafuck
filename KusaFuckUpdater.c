@@ -66,7 +66,7 @@ int main(void) {
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
 
-    const char *url = "https://github.com/sho-18001F/Kusafuck/raw/refs/heads/main/";
+    const char *url = "https://github.com/sho-18001F/Kusafuck/raw/refs/heads/main/kusa.exe";
     const char *target_filename = "kusa.exe";
 
     download_and_replace(url, target_filename);
