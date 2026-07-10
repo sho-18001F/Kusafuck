@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <curl/curl.h>
+#include <windows.h> // Windows APIを使用するために必要
 
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
@@ -62,6 +63,11 @@ int download_and_replace(const char *url, const char *target_filename) {
 }
 
 int main(void) {
+    SetConsoleOutputCP(65001);
+    
+    // 入力（キーボード）のコードページをUTF-8に設定
+    SetConsoleCP(65001);
+
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
