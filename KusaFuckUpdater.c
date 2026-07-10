@@ -58,7 +58,6 @@ int download_and_replace(const char *url, const char *target_filename) {
         return -1;
     }
 
-    printf("ファイルの置き換えが完了しました: %s\n", target_filename);
     return 0;
 }
 
