@@ -71,7 +71,7 @@ int main(void) {
     const char *target_filename = "kusa.exe";
 
     download_and_replace(url, target_filename);
-
+    //kusa
 
     curl_global_cleanup();
     return 0;
