@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!main_file) {
-        printf("使用方法: %s <メインファイル.kf> [-l <ライブラリ.kf> ...]\n", argv[0]);
+        printf("使用方法: %s <メインファイル.kf> [-l <ライブラリ.kf> ...] \n", argv[0]);
         return 1;
     }
 
