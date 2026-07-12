@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <curl/curl.h>
-#include <windows.h> // Windows APIを使用するために必要
+#include <windows.h> 
 
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
