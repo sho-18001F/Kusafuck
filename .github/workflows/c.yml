@@ -22,7 +22,7 @@ jobs:
     - name: Make the resource.res
       run: x86_64-w64-mingw32-windres resource.rc -O coff -o resource.res
     - name: Compile the kusa.c
-      run: x86_64-w64-mingw32-gcc kusa.c resources.res -o kusa.exe
+      run: x86_64-w64-mingw32-gcc kusa.c resource.res -o kusa.exe
     - name: Compile the KusaFuckUpdater.c
-      run: x86_64-w64-mingw32-gcc KusaFuckUpdater.c resources.res -o KusaFuckUpdater.exe -I./include -L./lib -lcurl
+      run: x86_64-w64-mingw32-gcc KusaFuckUpdater.c resource.res -o KusaFuckUpdater.exe -I./include -L./lib -lcurl
 
