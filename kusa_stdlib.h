@@ -89,7 +89,7 @@ static inline void execute_syscall(unsigned short *memory, int *dp) {
             break;
         }
         
-case 30: { // OSコマンド実行（安全なストレート版）
+        case 30: 
             char cmd_buf[512] = {0};
             int i = 0;
             int current_idx = next;

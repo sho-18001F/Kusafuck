@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <curl/curl.h>
-#include <windows.h> 
-
+#ifdef WIN32
+    #include <windows.h> 
+#endif
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     size_t written = fwrite(ptr, size, nmemb, stream);
@@ -63,11 +64,12 @@ int download_and_replace(const char *url, const char *target_filename) {
 }
 
 int main(void) {
-    SetConsoleOutputCP(65001);
+    #ifdef WIN32
+        SetConsoleOutputCP(65001);
     
     // 入力（キーボード）のコードページをUTF-8に設定
-    SetConsoleCP(65001);
-
+        SetConsoleCP(65001);
+    #endif
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
