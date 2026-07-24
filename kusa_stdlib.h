@@ -102,7 +102,6 @@ static inline void execute_syscall(unsigned short *memory, int *dp) {
             }
 
             if (i > 0) {
-                printf("[Kusafuck System Call]: %s\n", cmd_buf); // デバッグ用にコマンドを表示
                 system(cmd_buf);
             }
             break;
