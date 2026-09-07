@@ -2,7 +2,7 @@
 ## Kusafuck Programming Language
 what
 #### Cautions
-KusaFuckUpdater requires Administrator authority
+KusaFuckUpdater requires Administrator authority in Windows
 
 ### Instruction Set
 | Command (記号) | Description (日本語) |
